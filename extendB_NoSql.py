@@ -121,7 +121,6 @@ def main():
                     # Append to output_lines
                     output_lines.extend(union_intervals)
 
-    client.close()
 
     print(f"Total running time: {timer.secs:.6f} seconds")
     
