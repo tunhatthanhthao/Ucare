@@ -2,6 +2,8 @@ import mysql.connector
 import time
 import csv
 from connection.connect_to_mysql import connect_to_mysql
+from openpyxl import Workbook
+
 
 
 class Timer(object):
@@ -50,24 +52,32 @@ def find_union(A, B):
                 union_intervals.append((interval_a, interval_b))
     return union_intervals
 
-
 def print_intervals_without_gaps(intervals):
+    sorted_intervals = sorted(intervals, key=lambda x: (x[0], x[1]))
     current_line = []
     seen_intervals = set()  # To track seen intervals
-    for interval in intervals:
+    output_lines = []  # Store output lines
+    for interval in sorted_intervals:
         # Check if interval is a tuple before accessing its elements
         if isinstance(interval, tuple) and len(interval) >= 2:
             if interval not in seen_intervals:  # Check if interval is already seen
                 if not current_line or interval[0] <= current_line[-1][1]:
                     current_line.append(interval)
                 else:
-                    print_line(current_line)
+                    output_lines.append(current_line)
                     current_line = [interval]
                 seen_intervals.add(interval)  # Add interval to seen_intervals
         else:
             print("Invalid interval:", interval)
     if current_line:  # Print the remaining intervals if any
-        print_line(current_line)
+        output_lines.append(current_line)
+
+    # Convert the intervals to strings before returning
+    return [
+        [f"({interval[0]}, {interval[1]})" for interval in line]
+        for line in output_lines
+    ]
+
 
 
 def print_line(intervals):
@@ -77,12 +87,10 @@ def print_line(intervals):
 
 def union(A, B):
     result_set = set()
-
     for extent_a in A:
         for extent_b in B:
             if not extent_a or not extent_b:
                 continue  # Skip invalid intervals
-
             # Check for None values and handle them appropriately
             if extent_b[1] is None or extent_a[0] is None:
                 continue  # Skip if any endpoint is None
@@ -92,7 +100,6 @@ def union(A, B):
                 # There is an overlap, add both intervals to the result set
                 result_set.add(extent_a)
                 result_set.add(extent_b)
-
     return sorted(result_set, key=lambda x: (x[0], x[1]))
 
 def main():
@@ -104,6 +111,7 @@ def main():
         database="CsvData"
     )
     cursor = db_connection.cursor()
+    output_lines = []  # Store output lines for exporting to CSV
 
     with Timer() as timer:
         # Fetch all column names from the Data_table
@@ -139,25 +147,28 @@ def main():
                 # Append to union_results
                 union_results.extend(union_intervals)
 
-        # Perform union operation
-        union_result = union_results[0]
-        for i in range(1, len(union_results)):
-            union_result = union(union_result, union_results[i])
-        
+        # Combine all union intervals into a single list
+        combined_intervals = [interval for pair in union_results for interval in pair]
+
+        # Filter out invalid intervals from the combined list
+        valid_intervals = [interval for interval in combined_intervals if isinstance(interval, tuple)]
+
         # Print intervals without gaps
-            print_intervals_without_gaps(union_result)
+        print_intervals_without_gaps(valid_intervals)
 
     cursor.close()
     db_connection.close()
 
-    print(f"Total running time: {timer.secs:.6f} seconds")
     
-    # Exporting to CSV
-    with open('extend_A_Mysql.csv', 'w', newline='') as csvfile:
-        writer = csv.writer(csvfile)
-        writer.writerow(['Start', 'End'])
-        for line in union_result:
-            writer.writerow([line[0], line[1]])
+    ## Exporting to Excel
+    wb = Workbook()
+    ws = wb.active
+    for line in output_lines:
+        ws.append(line)  # Append each interval line to the worksheet
+    wb.save("extend_A_Nosql.xlsx")
+
+    print(f"Total running time: {timer.secs:.6f} seconds")
+
 
 if __name__ == "__main__":
     main()
