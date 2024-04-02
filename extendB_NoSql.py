@@ -2,6 +2,8 @@ import pymongo
 import time
 import csv
 from connection.mongo_connection import connect_to_mongodb
+from openpyxl import Workbook
+
 
 
 class Timer(object):
@@ -28,14 +30,36 @@ def find_union(A, B):
     return union_intervals
 
 def print_intervals_without_gaps(intervals):
+    sorted_intervals = sorted(intervals, key=lambda x: (x[0], x[1]))
     current_line = []
-    for interval in intervals:
-        if not current_line or interval[0][0] <= current_line[-1][1][1]:
-            current_line.append(interval)
+    seen_intervals = set()  # To track seen intervals
+    output_lines = []  # Store output lines
+    for interval in sorted_intervals:
+        # Check if interval is a tuple before accessing its elements
+        if isinstance(interval, tuple) and len(interval) >= 2:
+            if interval not in seen_intervals:  # Check if interval is already seen
+                if not current_line or interval[0] <= current_line[-1][1]:
+                    current_line.append(interval)
+                else:
+                    output_lines.append(current_line)
+                    current_line = [interval]
+                seen_intervals.add(interval)  # Add interval to seen_intervals
         else:
-            print_line(current_line)
-            current_line = [interval]
-    print_line(current_line)
+            print("Invalid interval:", interval)
+    if current_line:  # Print the remaining intervals if any
+        output_lines.append(current_line)
+
+    # Convert the intervals to strings before returning
+    return [
+        [f"({interval[0]}, {interval[1]})" for interval in line]
+        for line in output_lines
+    ]
+
+def print_line_with_commas(intervals):
+    for i, interval in enumerate(intervals):
+        print(f"({interval[0]}, {interval[1]})", end=' ')
+    print()
+
 
 def get_table_columns(collection):
     try:
@@ -85,6 +109,11 @@ def union(A, B):
     return sorted(result_set, key=lambda x: (x[0], x[1]))
 
 
+def select_tables_to_compare(tables):
+    # Specify the criteria to select tables for comparison
+    # For example, you might want to compare Table 1 with tables having indexes greater than 1
+    return tables[1:]  # Here, we select all tables except Table 1
+
 def main():
     # Connect to MongoDB
     database_name = "noSQL_Connect"  # Replace with your actual database name
@@ -92,44 +121,53 @@ def main():
     database, collection = connect_to_mongodb(database_name, collection_name)
     
     output_lines = []  # Store output lines for exporting to CSV
+    union_results = []  # Store all union intervals found
 
     with Timer() as timer:
         tables = get_table_columns(collection)
-        
-        for i in range(len(tables)):
-            table_A = tables[i]
-            for j in range(i+1, len(tables)):
-                table_B = tables[j]
-                
-                # Read intervals from MongoDB for both tables
-                intervals_A = read_intervals_from_mongodb(collection, table_A)
-                intervals_B = read_intervals_from_mongodb(collection, table_B)
+        table_1 = tables[0]  # Assuming Table 1 is the first table in your collection
 
-                # Find union intervals between intervals_A and intervals_B
-                union_intervals = find_union(intervals_A, intervals_B)
-                
-                if union_intervals:
-                    print(f"Union intervals between {table_A} and {table_B}:")
-                    for interval_pair in union_intervals:
-                        print(f"{table_A}{interval_pair[0]} < {table_B}{interval_pair[1]}")
-                    
-                    # Check if any intervals in the union are unions
-                    unions = union([x[0] for x in union_intervals], [x[1] for x in union_intervals])
-                    if unions:
-                        print("Unions:", unions)
-                
-                    # Append to output_lines
-                    output_lines.extend(union_intervals)
+        # Specify the tables you want to compare Table 1 with based on some criteria
+        tables_to_compare = select_tables_to_compare(tables)
 
+        for table_B in tables_to_compare:
+            # Read intervals from MongoDB for both tables
+            intervals_A = read_intervals_from_mongodb(collection, table_1)
+            intervals_B = read_intervals_from_mongodb(collection, table_B)
+
+            # Find union intervals between intervals_A and intervals_B
+            union_intervals = find_union(intervals_A, intervals_B)
+            
+            if union_intervals:
+                print(f"Union intervals between {table_1} and {table_B}:")
+                for interval_pair in union_intervals:
+                    print(f"{table_1}{interval_pair[0]} < {table_B}{interval_pair[1]}")
+            # Check if any intervals in the union are unions
+                unions = union([x[0] for x in union_intervals], [x[1] for x in union_intervals])
+                if unions:
+                    print("Unions:", unions)
+                
+                # Append to union_results
+                union_results.extend(union_intervals)
+
+    # Combine all union intervals into a single list
+    # Combine all union intervals into a single list
+    combined_intervals = [tuple(interval) for pair in union_results for interval in pair]
+    # Filter out invalid intervals from the combined list
+    valid_intervals = [interval for interval in combined_intervals if isinstance(interval, tuple)]
+    # Print intervals without gaps
+    print_intervals_without_gaps(valid_intervals)
+    output_lines.extend(print_intervals_without_gaps(valid_intervals))
+    
+    # Exporting to Excel
+    wb = Workbook()
+    ws = wb.active
+    for line in output_lines:
+        ws.append(line)  # Append each interval line to the worksheet
+    wb.save("extend_B_Nosql.xlsx")
 
     print(f"Total running time: {timer.secs:.6f} seconds")
-    
-    # Exporting to CSV
-    with open('extend_B_Nosql.csv', 'w', newline='') as csvfile:
-        writer = csv.writer(csvfile)
-        writer.writerow(['Start', 'End'])
-        for line in output_lines:
-            writer.writerow([line[0], line[1]])
 
 if __name__ == "__main__":
     main()
+
