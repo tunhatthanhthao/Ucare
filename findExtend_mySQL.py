@@ -32,24 +32,42 @@ def read_intervals_from_mysql(cursor, table_name, start_col, end_col):
     try:
         query = f"SELECT {start_col}, {end_col} FROM {table_name}"
         cursor.execute(query)
-        intervals = cursor.fetchall()
+        rows = cursor.fetchall()
+
+        intervals = []
+        for row in rows:
+            # Each row contains multiple intervals, so we need to parse them
+            row_intervals = [(row[i], row[i + 1]) for i in range(0, len(row), 2) if row[i] is not None and row[i + 1] is not None]
+            intervals.extend(row_intervals)
+
         return intervals
     except Exception as e:
         print(f"Error reading intervals from {table_name}: {e}")
         return []
+
+    except Exception as e:
+        print(f"Error reading intervals from {table_name}: {e}")
+        return []
+
+
 
 def find_union_pairs_linear(A, B):
     union_pairs = set()
     i, j = 0, 0
 
     while i < len(A) and j < len(B):
-        extent_a = A[i]
-        extent_b = B[j]
+        extent_a = A[i]  # Convert list to tuple
+        extent_b = B[j]  # Convert list to tuple
 
-        if not extent_a or not extent_b or len(extent_a) != 2 or len(extent_b) != 2:
-            continue  # Skip invalid intervals
+        if extent_a is None or extent_b is None or len(extent_a) != 2 or len(extent_b) != 2:
+            # Skip invalid intervals
+            i += 1
+            j += 1
+            continue
 
-        if extent_b[1] < extent_a[0]:
+        if extent_a[1] < extent_b[0]:
+            i += 1
+        elif extent_b[1] < extent_a[0]:
             j += 1
         else:
             # There is an overlap, add both intervals to the union pairs set
@@ -59,6 +77,9 @@ def find_union_pairs_linear(A, B):
             j += 1  # Move both pointers forward
 
     return sorted(union_pairs, key=lambda x: (x[0], x[1]))
+
+
+
 
 def print_intervals_without_gaps(intervals):
     current_line = []
