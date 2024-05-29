@@ -1,4 +1,4 @@
-Here’s an updated version of the README that includes the explanations for `A > B` and `A < B`, along with the provided examples:
+Sure, here are the additional explanations with basic examples for the `_{A}`, `{A}_`, and `[N]` operators included in the README:
 
 ---
 
@@ -122,42 +122,59 @@ This repository contains an implementation of algorithms to find intersecting an
     A(101, 110) > 2(102, 105)
     A(191, 201) > 2(196, 199)
     A(219, 229) > 2(220, 225)
-    A(329, 337) > 2(331
+    A(329, 337) > 2(
 
-, 334)
+331, 334)
     A(736, 743) > 2(738, 742)
     A(756, 764) > 2(761, 763)
     A(898, 907) > 2(901, 903)
-    
-    Union intervals between A and 3:
-    A(25, 33) > 3(28, 30)
-    A(347, 354) > 3(349, 350)
-    A(372, 379) > 3(375, 376)
-    A(426, 433) > 3(430, 432)
-    A(561, 568) > 3(562, 566)
-    A(698, 707) > 3(701, 703)
-    A(792, 796) > 3(794, 795)
-    A(810, 815) > 3(811, 814)
-    
-    Union intervals between A and 4:
-    A(52, 60) > 4(54, 58)
-    A(72, 82) > 4(73, 81)
-    A(86, 93) > 4(87, 89)
-    A(145, 155) > 4(146, 151)
-    A(191, 201) > 4(193, 197)
-    A(204, 213) > 4(207, 212)
-    A(272, 281) > 4(277, 278)
-    A(500, 510) > 4(503, 509)
-    A(547, 557) > 4(553, 554)
-    A(606, 615) > 4(610, 611)
-    A(698, 707) > 4(700, 706)
-    A(853, 859) > 4(854, 857)
-    A(1046, 1056) > 4(1050, 1054)
     ```
 
 - `_{A}`: The 'start' projection. For each extent (u, v) in A, return (u, u).
+  - **Example**: Given intervals in A:
+    ```
+    52 60 101 110 191 201 219 229 329 337 736 743 756 764 898 907
+    ```
+    The 'start' projection would return:
+    ```
+    52 52
+    101 101
+    191 191
+    219 219
+    329 329
+    736 736
+    756 756
+    898 898
+    ```
+
 - `{A}_`: The 'end' projection. For each extent (u, v) in A, return (v, v).
+  - **Example**: Given intervals in A:
+    ```
+    52 60 101 110 191 201 219 229 329 337 736 743 756 764 898 907
+    ```
+    The 'end' projection would return:
+    ```
+    60 60
+    110 110
+    201 201
+    229 229
+    337 337
+    743 743
+    764 764
+    907 907
+    ```
+
 - `[N]`: Returns all extents of length N, where N is an integer (basically a sliding window).
+  - **Example**: Given intervals of various lengths:
+    ```
+    52 60 101 110 191 201 219 229 329 337 736 743 756 764 898 907
+    ```
+    With `N = 8`, the extents of length 8 would return:
+    ```
+    52 60
+    736 743
+    756 764
+    ```
 
 ## Files
 
@@ -305,4 +322,4 @@ This project uses the `mysql-connector-python` library for MySQL connectivity, `
 
 ---
 
-This README should now better reflect the functionality and examples related to the `A > B` and `A < B` operators as specified.
+This README should now better reflect the functionality and examples related to the `_{A}`, `{A}_`, and `[N]` operators as specified.
