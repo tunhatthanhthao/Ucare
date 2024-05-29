@@ -1,8 +1,4 @@
-Sure, here are the additional explanations with basic examples for the `_{A}`, `{A}_`, and `[N]` operators included in the README:
-
----
-
-# Interval Intersection and Union Algorithm
+# Interval Intersection and Union Algorithm (pyRAP)
 
 This repository contains an implementation of algorithms to find intersecting and union intervals from both MySQL and MongoDB databases. The intervals are retrieved from specified columns of a table or collection, and the intersecting or union intervals are identified and saved to a CSV or Excel file.
 
