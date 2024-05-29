@@ -41,9 +41,9 @@ This repository contains an implementation of algorithms to find intersecting an
 - `A .. B`: Returns all extents that start with A and end with B.
   - **Example**: Given intervals:
     ```
-    '1', '3', '13', '2', '7', '2', '10', '8', '16'
-    '2', '20', '24', '9', '17', '11', '18', '23', '33'
-    '3', '25', '33', '22', '26', '28', '30', '39', '40'
+    1 3 13 2 7 2 10 8 16
+    2 20 24 9 17 11 18 23 33
+    3 25 33 22 26 28 30 39 40
     ```
     The extents that start with A and end with B would return:
     ```
@@ -118,9 +118,7 @@ This repository contains an implementation of algorithms to find intersecting an
     A(101, 110) > 2(102, 105)
     A(191, 201) > 2(196, 199)
     A(219, 229) > 2(220, 225)
-    A(329, 337) > 2(
-
-331, 334)
+    A(329, 337) > 2(331, 334)
     A(736, 743) > 2(738, 742)
     A(756, 764) > 2(761, 763)
     A(898, 907) > 2(901, 903)
